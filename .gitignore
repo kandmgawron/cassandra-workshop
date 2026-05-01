@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Workshop website (hosted separately on S3)
+website/
+
+# Editor
+.vscode/
+.idea/
+*.swp
