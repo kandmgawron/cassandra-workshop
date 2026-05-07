@@ -166,23 +166,20 @@ Resources:
           systemctl enable --now docker
           usermod -aG docker ec2-user
 
-          # Use this instance's private IP for all Cassandra listen/broadcast
-          # addresses so nodes can reach each other across the VPC.
-          PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-
+          # --network host: container shares the EC2 instance's network stack.
+          # The cassandra:5.0 entrypoint uses _ip_address() (reads from `ip addr`)
+          # to auto-detect listen/broadcast/seeds. With host networking that
+          # resolves to the instance's private IP — no IMDS call, no env-var
+          # wrestling, no Docker bridge address leaking into the config.
+          # Ports 7000/7001/9042 bind directly on the host interface.
           docker run -d \
             --name cassandra \
             --restart unless-stopped \
-            -p 9042:9042 -p 7000:7000 -p 7001:7001 \
+            --network host \
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
-            -e CASSANDRA_SEEDS="$PRIVATE_IP" \
-            -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
-            -e HEAP_NEWSIZE=128M \
             -e MAX_HEAP_SIZE=512M \
             -v cassandra-data:/var/lib/cassandra \
             cassandra:5.0
@@ -263,8 +260,8 @@ Resources:
           dnf update -y
           dnf install -y docker
           systemctl enable --now docker
+          usermod -aG docker ec2-user
 
-          PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
           SEED_IP="${CassandraNode1.PrivateIp}"
 
           echo "[node2] waiting for seed $SEED_IP:7000 to be reachable..."
@@ -276,16 +273,12 @@ Resources:
           docker run -d \
             --name cassandra \
             --restart unless-stopped \
-            -p 9042:9042 -p 7000:7000 -p 7001:7001 \
+            --network host \
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
             -e CASSANDRA_SEEDS="$SEED_IP" \
-            -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
-            -e HEAP_NEWSIZE=128M \
             -e MAX_HEAP_SIZE=512M \
             -v cassandra-data:/var/lib/cassandra \
             cassandra:5.0
@@ -321,8 +314,8 @@ Resources:
           dnf update -y
           dnf install -y docker
           systemctl enable --now docker
+          usermod -aG docker ec2-user
 
-          PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
           SEED_IP="${CassandraNode1.PrivateIp}"
 
           echo "[node3] waiting for seed $SEED_IP:7000..."
@@ -340,16 +333,12 @@ Resources:
           docker run -d \
             --name cassandra \
             --restart unless-stopped \
-            -p 9042:9042 -p 7000:7000 -p 7001:7001 \
+            --network host \
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
             -e CASSANDRA_SEEDS="$SEED_IP" \
-            -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
-            -e HEAP_NEWSIZE=128M \
             -e MAX_HEAP_SIZE=512M \
             -v cassandra-data:/var/lib/cassandra \
             cassandra:5.0
