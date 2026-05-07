@@ -1,31 +1,28 @@
 # 3-node Cassandra sandbox cluster.
-# - cassandra-1 is the seed; cassandra-2 and cassandra-3 join via gossip.
+# - cassandra is the seed; cassandra-2 and cassandra-3 join via gossip.
 # - All nodes share one logical datacenter (dc1) and one rack (rack1),
 #   which lets us use NetworkTopologyStrategy with RF=3 in the demo schema.
 # - Heap is intentionally small (512M) so three nodes fit comfortably on a
 #   laptop. Production tuning is very different.
-# - Only cassandra-1's CQL port (9042) is published to the host so that
+# - Only the seed node's CQL port (9042) is published to the host so that
 #   `cqlsh` from your laptop talks to one node; the cluster handles the rest.
-#   Uncomment the 9043/9044 lines to expose the other two nodes if you want
-#   to demonstrate per-node connections.
 
 services:
-  cassandra-1:
+  cassandra:
     image: cassandra:5.0
-    container_name: cassandra-1
-    hostname: cassandra-1
+    container_name: cassandra
+    hostname: cassandra
     ports:
       - "9042:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=SandboxCluster
-      - CASSANDRA_SEEDS=cassandra-1
+      - CASSANDRA_SEEDS=cassandra
       - CASSANDRA_DC=dc1
       - CASSANDRA_RACK=rack1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=512M
     volumes:
-      - cassandra-1-data:/var/lib/cassandra
+      - cassandra-data:/var/lib/cassandra
     healthcheck:
       test: ["CMD-SHELL", "nodetool status | grep -E '^UN' | wc -l | grep -q 1"]
       interval: 15s
@@ -39,20 +36,17 @@ services:
     image: cassandra:5.0
     container_name: cassandra-2
     hostname: cassandra-2
-    # ports:
-    #   - "9043:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=SandboxCluster
-      - CASSANDRA_SEEDS=cassandra-1
+      - CASSANDRA_SEEDS=cassandra
       - CASSANDRA_DC=dc1
       - CASSANDRA_RACK=rack1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=512M
     volumes:
       - cassandra-2-data:/var/lib/cassandra
     depends_on:
-      cassandra-1:
+      cassandra:
         condition: service_healthy
     networks:
       - cassandra-net
@@ -61,15 +55,12 @@ services:
     image: cassandra:5.0
     container_name: cassandra-3
     hostname: cassandra-3
-    # ports:
-    #   - "9044:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=SandboxCluster
-      - CASSANDRA_SEEDS=cassandra-1
+      - CASSANDRA_SEEDS=cassandra
       - CASSANDRA_DC=dc1
       - CASSANDRA_RACK=rack1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=512M
     volumes:
       - cassandra-3-data:/var/lib/cassandra
@@ -80,7 +71,7 @@ services:
       - cassandra-net
 
 volumes:
-  cassandra-1-data:
+  cassandra-data:
   cassandra-2-data:
   cassandra-3-data:
 
