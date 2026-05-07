@@ -8,9 +8,9 @@ A 3-node Apache Cassandra 5.0 cluster you can run on your laptop (Docker) or on 
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | 3-node local cluster |
-| `setup.sh` | One-command bring-up, health wait, schema load |
-| `teardown.sh` | Stop or wipe the local cluster |
+| `docker/docker-compose.yml` | 3-node local cluster |
+| `docker/deploy.sh` | One-command bring-up, health wait, schema load |
+| `docker/teardown.sh` | Stop or wipe the local cluster |
 | `cql/init.cql` | Demo keyspace + table + sample data |
 | `cql/demo-queries.cql` | Guided queries for the workshop (consistency levels etc.) |
 | `aws/cloudformation.yaml` | 3 EC2 instances (one Cassandra node each) + VPC |
@@ -24,19 +24,19 @@ A 3-node Apache Cassandra 5.0 cluster you can run on your laptop (Docker) or on 
 
 ```bash
 # Start the cluster (~2-3 min on first run)
-./setup.sh
+docker/deploy.sh
 
 # Check all 3 nodes are UN (Up/Normal)
-./setup.sh --status
+docker/deploy.sh --status
 
 # Open a CQL shell
-./setup.sh --cqlsh
+docker/deploy.sh --cqlsh
 
 # Stop when done (data preserved)
-./teardown.sh
+docker/teardown.sh
 
 # Stop + delete all data
-./teardown.sh --wipe
+docker/teardown.sh --wipe
 ```
 
 The cluster exposes CQL on `localhost:9042`. All three nodes share a bridge network and form a ring automatically via gossip.
