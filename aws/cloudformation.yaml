@@ -100,7 +100,7 @@ Resources:
   CassandraSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Cassandra sandbox — external SSH/CQL + internal gossip
+      GroupDescription: Cassandra sandbox - external SSH/CQL + internal gossip
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -133,7 +133,7 @@ Resources:
       FromPort: 9042
       ToPort: 9042
       SourceSecurityGroupId: !Ref CassandraSG
-      Description: CQL between nodes (coordinator → replica requests)
+      Description: CQL between nodes (coordinator to replica requests)
 
   # ---------------------------------------------------------------------------
   # Node 1 — seed node.
@@ -164,6 +164,7 @@ Resources:
           dnf update -y
           dnf install -y docker
           systemctl enable --now docker
+          usermod -aG docker ec2-user
 
           # Use this instance's private IP for all Cassandra listen/broadcast
           # addresses so nodes can reach each other across the VPC.
@@ -176,9 +177,8 @@ Resources:
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
             -e CASSANDRA_SEEDS="$PRIVATE_IP" \
             -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS=0.0.0.0 \
+            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
@@ -280,9 +280,8 @@ Resources:
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
             -e CASSANDRA_SEEDS="$SEED_IP" \
             -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS=0.0.0.0 \
+            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
@@ -345,9 +344,8 @@ Resources:
             -e CASSANDRA_CLUSTER_NAME=SandboxCluster \
             -e CASSANDRA_SEEDS="$SEED_IP" \
             -e CASSANDRA_LISTEN_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_RPC_ADDRESS=0.0.0.0 \
+            -e CASSANDRA_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_BROADCAST_ADDRESS="$PRIVATE_IP" \
-            -e CASSANDRA_BROADCAST_RPC_ADDRESS="$PRIVATE_IP" \
             -e CASSANDRA_DC=dc1 \
             -e CASSANDRA_RACK=rack1 \
             -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch \
